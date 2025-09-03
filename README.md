@@ -1,9 +1,11 @@
-🌦️ Clima Agora
+## 🌦️ Clima Agora
 
 Aplicação web simples e intuitiva para exibir informações climáticas em tempo real.
 Desenvolvida com React + Vite e estilizada com TailwindCSS.
 
-📌 Funcionalidades
+---
+
+## 📌 Funcionalidades
 
 Consulta de clima atual em diferentes cidades.
 
@@ -13,7 +15,7 @@ Carregamento rápido com Vite.
 
 Estilização utilizando TailwindCSS.
 
-🛠️ Tecnologias Utilizadas
+## 🛠️ Tecnologias Utilizadas
 
 React 18
 
@@ -23,7 +25,10 @@ TailwindCSS 3
 
 PostCSS
 
-🚀 Como Rodar o Projeto
+___
+
+
+## 🚀 Como Rodar o Projeto
 1. Clonar o repositório
 git clone https://github.com/seu-usuario/clima-agora.git
 cd clima-agora
@@ -40,7 +45,9 @@ npm run build
 5. Visualizar build
 npm run preview
 
-📂 Estrutura do Projeto
+
+---
+## 📂 Estrutura do Projeto
 clima-agora/
 ├── index.html
 ├── package.json
@@ -52,15 +59,19 @@ clima-agora/
     ├── assets/
     ├── App.jsx
     └── main.jsx
+    
+___
 
-✨ Melhorias Futuras
+##✨ Melhorias Futuras
 
 
 Modo escuro automático baseado no horário.
 
 Localização automática do usuário.
 
-📜 Licença
+___
+
+## 📜 Licença
 
 Este projeto está sob a licença MIT.
 Sinta-se à vontade para usar, modificar e compartilhar.

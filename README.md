@@ -1,6 +1,6 @@
 ## 🌦️ Clima Agora
 
-Aplicação web simples e intuitiva para exibir informações climáticas em tempo real.
+Aplicação web simples e intuitiva para exibir informações climáticas e hora do local em tempo real com APIs.
 Desenvolvida com React + Vite e estilizada com TailwindCSS.
 
 ---

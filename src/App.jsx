@@ -1,8 +1,7 @@
-
 import React, { useEffect, useMemo, useState } from "react";
 
 const API_BASE = "https://api.openweathermap.org/data/2.5";
-const API_KEY = "e350e0437cdd076d76a7a86f4bc75255"; // sua chave
+const API_KEY = "e350e0437cdd076d76a7a86f4bc75255";
 
 function iconUrl(icon) {
   return `https://openweathermap.org/img/wn/${icon}@2x.png`;
@@ -13,9 +12,7 @@ async function fetchJSON(url) {
   let data = null;
   try {
     data = await res.json();
-  } catch {
-    
-  }
+  } catch {}
   if (!res.ok) {
     const msg = data?.message || res.statusText || `HTTP ${res.status}`;
     throw new Error(msg);
@@ -25,14 +22,16 @@ async function fetchJSON(url) {
 
 export default function App() {
   const [query, setQuery] = useState("");
-  const [units, setUnits] = useState("metric"); // metric => °C, imperial => °F
+  const [units, setUnits] = useState("metric");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [current, setCurrent] = useState(null);
   const [forecast, setForecast] = useState([]);
+  const [localTime, setLocalTime] = useState("");
 
   const unitLabel = units === "metric" ? "°C" : "°F";
 
+  // Compacta os dados do forecast em 5 dias
   function compactDaily(list) {
     const byDate = {};
     for (const item of list) {
@@ -65,6 +64,24 @@ export default function App() {
     const todayStr = new Date().toISOString().slice(0, 10);
     return days.filter(d => d.date !== todayStr).slice(0, 5);
   }
+function updateLocalTime(timezoneOffset) {
+  clearInterval(window.localClockInterval);
+
+  window.localClockInterval = setInterval(() => {
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000; // converte para UTC real
+    const local = new Date(utc + timezoneOffset * 1000); // aplica offset retornado pela API
+
+    setLocalTime(
+      local.toLocaleTimeString("pt-BR", {
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    );
+  }, 1000);
+}
 
   async function fetchWeatherByCoords(lat, lon) {
     setLoading(true);
@@ -78,6 +95,7 @@ export default function App() {
       ]);
       setCurrent(w);
       setForecast(compactDaily(f.list));
+      updateLocalTime(w.timezone);
     } catch (err) {
       console.error("fetchWeatherByCoords:", err);
       setError(err.message || "Erro ao buscar dados do clima.");
@@ -101,6 +119,7 @@ export default function App() {
       ]);
       setCurrent(w);
       setForecast(compactDaily(f.list));
+      updateLocalTime(w.timezone);
     } catch (err) {
       console.error("fetchWeatherByCity:", err);
       setError(err.message || "Erro ao buscar dados por cidade.");
@@ -133,7 +152,9 @@ export default function App() {
 
   useEffect(() => {
     detectLocationAndLoad();
-  }, [units]); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [units]);
+
   const cityName = useMemo(() => current?.name ?? "—", [current]);
 
   return (
@@ -141,58 +162,46 @@ export default function App() {
       <div className="max-w-4xl mx-auto py-6">
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Clima Agora ☁️</h1>
-
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <div className="flex items-stretch gap-2 w-full">
-              <input
-                className="flex-1 rounded-2xl bg-slate-700/60 px-4 py-2 outline-none placeholder:text-slate-300"
-                placeholder="Buscar cidade (ex: São Paulo)"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && fetchWeatherByCity(query)}
-              />
-              <button
-                onClick={() => fetchWeatherByCity(query)}
-                className="rounded-2xl px-4 py-2 bg-indigo-500 hover:bg-indigo-600 active:scale-95 transition"
-              >
-                Buscar
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={detectLocationAndLoad}
-                className="rounded-2xl px-4 py-2 bg-slate-700/60 hover:bg-slate-700 active:scale-95 transition"
-                title="Detectar localização automaticamente"
-              >
-                📍 Usar minha localização
-              </button>
-
-              <button
-                onClick={() => fetchWeatherByCoords(-23.5505, -46.6333)} // São Paulo - fallback de teste
-                className="rounded-2xl px-3 py-2 bg-slate-700/60 hover:bg-slate-700 active:scale-95 transition text-sm"
-                title="Teste com São Paulo"
-              >
-                Teste: São Paulo
-              </button>
-
-              <div className="flex items-center gap-1 rounded-2xl bg-slate-700/60 px-1">
-                <button
-                  onClick={() => setUnits("metric")}
-                  className={`px-3 py-2 rounded-2xl ${units === "metric" ? "bg-slate-900" : "opacity-70"}`}
-                >
-                  °C
-                </button>
-                <button
-                  onClick={() => setUnits("imperial")}
-                  className={`px-3 py-2 rounded-2xl ${units === "imperial" ? "bg-slate-900" : "opacity-70"}`}
-                >
-                  °F
-                </button>
-              </div>
-            </div>
+          <div className="text-lg text-indigo-400">
+            {localTime && <span>🕒 Horário Local: {localTime}</span>}
           </div>
         </header>
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mb-6">
+          <div className="flex items-stretch gap-2 w-full">
+            <input
+              className="flex-1 rounded-2xl bg-slate-700/60 px-4 py-2 outline-none placeholder:text-slate-300"
+              placeholder="Buscar cidade (ex: São Paulo)"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && fetchWeatherByCity(query)}
+            />
+            <button
+              onClick={() => fetchWeatherByCity(query)}
+              className="rounded-2xl px-4 py-2 bg-indigo-500 hover:bg-indigo-600 active:scale-95 transition"
+            >
+              Buscar
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={detectLocationAndLoad}
+              className="rounded-2xl px-4 py-2 bg-slate-700/60 hover:bg-slate-700 active:scale-95 transition"
+              title="Detectar localização automaticamente"
+            >
+              📍 Usar minha localização
+            </button>
+
+            <button
+              onClick={() => fetchWeatherByCoords(-23.5505, -46.6333)}
+              className="rounded-2xl px-3 py-2 bg-slate-700/60 hover:bg-slate-700 active:scale-95 transition text-sm"
+              title="Teste com São Paulo"
+            >
+              Teste: São Paulo
+            </button>
+          </div>
+        </div>
 
         {error && (
           <div className="mb-4 rounded-2xl bg-red-500/20 border border-red-500/40 p-3 text-sm">
@@ -221,34 +230,6 @@ export default function App() {
                 </div>
                 <div className="text-slate-300 capitalize">{current.weather?.[0]?.description}</div>
               </div>
-
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm text-slate-200">
-                <div className="rounded-xl bg-slate-800/60 p-3 border border-white/5">
-                  <div className="text-slate-400 text-xs uppercase tracking-widest">Sensação</div>
-                  <div className="font-medium">{Math.round(current.main?.feels_like)}{unitLabel}</div>
-                </div>
-                <div className="rounded-xl bg-slate-800/60 p-3 border border-white/5">
-                  <div className="text-slate-400 text-xs uppercase tracking-widest">Humidade</div>
-                  <div className="font-medium">{current.main?.humidity}%</div>
-                </div>
-                <div className="rounded-xl bg-slate-800/60 p-3 border border-white/5">
-                  <div className="text-slate-400 text-xs uppercase tracking-widest">Vento</div>
-                  <div className="font-medium">{Math.round(current.wind?.speed)} {units === "metric" ? "m/s" : "mph"}</div>
-                </div>
-                <div className="rounded-xl bg-slate-800/60 p-3 border border-white/5">
-                  <div className="text-slate-400 text-xs uppercase tracking-widest">Pressão</div>
-                  <div className="font-medium">{current.main?.pressure} hPa</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-4 shadow">
-              <h3 className="font-semibold mb-3">Detalhes</h3>
-              <ul className="space-y-2 text-sm text-slate-200">
-                <li className="flex justify-between"><span>Visibilidade</span><span>{(current.visibility ?? 0) / 1000} km</span></li>
-                {current.clouds && <li className="flex justify-between"><span>Nuvens</span><span>{current.clouds.all}%</span></li>}
-                {current.coord && <li className="flex justify-between"><span>Coordenadas</span><span>{current.coord.lat.toFixed(2)}, {current.coord.lon.toFixed(2)}</span></li>}
-              </ul>
             </div>
           </section>
         )}
@@ -268,10 +249,6 @@ export default function App() {
             </div>
           </section>
         )}
-
-        <footer className="mt-10 text-xs text-slate-400">
-          Fonte: OpenWeather • Dica: se quiser previsões em PT-BR, mantenha o idioma do navegador em português.
-        </footer>
       </div>
     </div>
   );
